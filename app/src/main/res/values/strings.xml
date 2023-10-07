@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">wearos-todoapp</string>
+    <!--
+    This string is used for square devices and overridden by hello_world in
+    values-round/strings.xml for round devices.
+    -->
+    <string name="hello_world">From the Square world,\nHello, %1$s!</string>
+    <string name="button_add_task">Add</string>
+    <string name="enter_task_hint">Task</string>
+</resources>
