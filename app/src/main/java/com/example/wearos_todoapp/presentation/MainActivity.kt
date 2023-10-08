@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.input.RemoteInputIntentHelper
@@ -74,12 +76,11 @@ fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
+            .padding(24.dp, 0.dp)
             .wrapContentWidth(Alignment.CenterHorizontally)
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
         ) {
             item {
                 Spacer(modifier = Modifier.height(2.dp))
@@ -105,8 +106,6 @@ fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
                         tasks = taskDao.getAllTasks()
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
