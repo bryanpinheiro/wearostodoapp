@@ -65,6 +65,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-android:1.5.3")
     implementation("androidx.compose.ui:ui-tooling-preview")
 
+    implementation("androidx.wear:wear-input:1.2.0-alpha02")
+
     implementation("androidx.wear.compose:compose-foundation:1.2.0")
 
     // For Wear Material Design UX guidelines and specifications

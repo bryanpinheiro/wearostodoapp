@@ -6,17 +6,17 @@
 
 package com.example.wearos_todoapp.presentation
 
+import android.app.RemoteInput
+import android.content.Intent
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,10 +28,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.tooling.preview.Devices
-import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.CompactButton
 import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.wear.compose.material.Text
+import androidx.wear.input.RemoteInputIntentHelper
+import androidx.wear.input.wearableExtender
 import com.example.wearos_todoapp.R
 import com.example.wearos_todoapp.presentation.theme.WearostodoappTheme
 
@@ -77,7 +80,7 @@ fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
+            /*Button(
                 onClick = {
                     if (taskText.isNotBlank()) {
                         val newTask = Task(taskText = taskText)
@@ -97,7 +100,11 @@ fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
                     stringResource(id = R.string.button_add_task),
                     style = MaterialTheme.typography.body1
                 )
-            }
+            }*/
+
+            UserInputScreen(
+                modifier = Modifier.padding(16.dp)
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -132,7 +139,8 @@ fun TaskItemRow(task: Task, onDeleteTask: (Task) -> Unit) {
                 .align(Alignment.CenterVertically)  // Align text to center vertically
                 .padding(16.dp)
         )
-        Button(
+
+        /*Button(
             onClick = { onDeleteTask(task) },
             modifier = Modifier
                 .padding(16.dp)
@@ -141,6 +149,58 @@ fun TaskItemRow(task: Task, onDeleteTask: (Task) -> Unit) {
                 stringResource(id = R.string.button_remove_task),
                 style = MaterialTheme.typography.body1
             )
+        }*/
+
+        UserInputScreen(
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Composable
+fun UserInputScreen(
+    modifier: Modifier = Modifier
+) {
+    val defaultText = stringResource(id = R.string.edit_user_input)
+    var userInput by remember { mutableStateOf(defaultText) }
+    val inputTextKey = "input_text"
+
+    val remoteInputs: List<RemoteInput> = listOf(
+        RemoteInput.Builder(inputTextKey)
+            .setLabel(stringResource(id = R.string.edit_user_input))
+            .wearableExtender {
+                setEmojisAllowed(true)
+                setInputActionType(EditorInfo.IME_ACTION_DONE)
+            }.build(),
+    )
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        it.data?.let { data ->
+            val results: Bundle = RemoteInput.getResultsFromIntent(data)
+            val newInputText: CharSequence? = results.getCharSequence(inputTextKey)
+            userInput = newInputText?.toString() ?: ""
+        }
+    }
+
+    val intent: Intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+    RemoteInputIntentHelper.putRemoteInputsExtra(intent, remoteInputs)
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.fillMaxSize()
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(1.25f)) {
+            Text(text = userInput, Modifier.weight(1f).align(Alignment.CenterVertically))
+            CompactButton(
+                onClick = { launcher.launch(intent) },
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = stringResource(id = R.string.edit_user_input)
+                )
+            }
         }
     }
 }
