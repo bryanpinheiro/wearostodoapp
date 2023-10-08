@@ -14,9 +14,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +34,11 @@ import androidx.wear.compose.material.CompactButton
 import androidx.wear.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.input.RemoteInputIntentHelper
 import androidx.wear.input.wearableExtender
@@ -57,7 +64,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
-    var taskText by remember { mutableStateOf("") }
     var tasks by remember { mutableStateOf(emptyList<Task>()) }
 
     LaunchedEffect(Unit) {
@@ -68,57 +74,39 @@ fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp)
+            .padding(24.dp)
             .wrapContentWidth(Alignment.CenterHorizontally)
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .widthIn(max = 600.dp)
                 .fillMaxWidth()
-
         ) {
+            item {
+                Spacer(modifier = Modifier.height(2.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            /*Button(
-                onClick = {
-                    if (taskText.isNotBlank()) {
-                        val newTask = Task(taskText = taskText)
-                        coroutineScope.launch(Dispatchers.IO) {
-                            taskDao.insert(newTask)
-                            taskText = ""
-                            // Refresh the task list to display the new task
-                            tasks = taskDao.getAllTasks()
-                        }
+                UserInputScreen(
+                    modifier = Modifier.padding(16.dp),
+                ) {
+                    // Callback to add a task
+                    coroutineScope.launch(Dispatchers.IO) {
+                        taskDao.insert(it)
+                        tasks = taskDao.getAllTasks()
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp, 0.dp)
-            ) {
-                Text(
-                    stringResource(id = R.string.button_add_task),
-                    style = MaterialTheme.typography.body1
-                )
-            }*/
-
-            UserInputScreen(
-                modifier = Modifier.padding(16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            LazyColumn {
-                items(tasks) {task ->
-                    TaskItemRow(task) {
-                        // Callback to delete a task
-                        coroutineScope.launch(Dispatchers.IO) {
-                            taskDao.delete(task)
-                            tasks = taskDao.getAllTasks()
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
+
+                Spacer(modifier = Modifier.height(2.dp))
+            }
+
+            items(tasks) {task ->
+                TaskItemRow(task) {
+                    // Callback to delete a task
+                    coroutineScope.launch(Dispatchers.IO) {
+                        taskDao.delete(task)
+                        tasks = taskDao.getAllTasks()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -129,40 +117,43 @@ fun TaskItemRow(task: Task, onDeleteTask: (Task) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .height(72.dp)  // Adjust the height for centering vertically
+            .background(
+                color = Color(android.graphics.Color.parseColor("#D3D3D3")),
+                shape = RoundedCornerShape(24.dp) // Rounded corners
+            ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = task.taskText,
+            textAlign = TextAlign.Justify,
             modifier = Modifier
-                .weight(1f)
-                .align(Alignment.CenterVertically)  // Align text to center vertically
-                .padding(16.dp)
+                .padding(12.dp, 4.dp, 2.dp, 4.dp)
+                .weight(1f),
+            color = Color(android.graphics.Color.parseColor("#000000"))
         )
 
-        /*Button(
+        CompactButton(
             onClick = { onDeleteTask(task) },
-            modifier = Modifier
-                .padding(16.dp)
-        ) {
-            Text(
-                stringResource(id = R.string.button_remove_task),
-                style = MaterialTheme.typography.body1
+            colors = ButtonDefaults.buttonColors(
+                Color(android.graphics.Color.parseColor("#808080"))
             )
-        }*/
-
-        UserInputScreen(
-            modifier = Modifier.padding(16.dp)
-        )
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                modifier = Modifier.size(20.dp),
+                contentDescription = stringResource(id = R.string.button_remove_task),
+                tint = Color(android.graphics.Color.parseColor("#FFFFFF"))
+            )
+        }
     }
 }
 
 @Composable
 fun UserInputScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTaskAdded: (task: Task) -> Unit
 ) {
-    val defaultText = stringResource(id = R.string.edit_user_input)
-    var userInput by remember { mutableStateOf(defaultText) }
+    var userInput by remember { mutableStateOf("") }
     val inputTextKey = "input_text"
 
     val remoteInputs: List<RemoteInput> = listOf(
@@ -181,6 +172,10 @@ fun UserInputScreen(
             val results: Bundle = RemoteInput.getResultsFromIntent(data)
             val newInputText: CharSequence? = results.getCharSequence(inputTextKey)
             userInput = newInputText?.toString() ?: ""
+            if (userInput.isNotBlank()) {
+                val newTask = Task(taskText = userInput)
+                onTaskAdded(newTask)
+            }
         }
     }
 
@@ -192,7 +187,15 @@ fun UserInputScreen(
         modifier = modifier.fillMaxSize()
     ) {
         Row(modifier = Modifier.fillMaxWidth(1.25f)) {
-            Text(text = userInput, Modifier.weight(1f).align(Alignment.CenterVertically))
+
+            Text(
+                text = stringResource(id = R.string.edit_user_input),
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically),
+                fontSize = 14.sp,
+            )
+
             CompactButton(
                 onClick = { launcher.launch(intent) },
             ) {
@@ -208,7 +211,7 @@ fun UserInputScreen(
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    val tasks = emptyList<Task>() // Initialize with an empty list
+    val tasks = emptyList<Task>()
 
     WearostodoappTheme {
         TodoApp(
