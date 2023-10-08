@@ -15,12 +15,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -35,7 +35,7 @@ import androidx.wear.compose.material.Text
 import com.example.wearos_todoapp.R
 import com.example.wearos_todoapp.presentation.theme.WearostodoappTheme
 
-class TodoAppActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     private lateinit var taskDao: TaskDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,34 +74,6 @@ fun TodoApp(taskDao: TaskDao, coroutineScope: CoroutineScope) {
                 .fillMaxWidth()
 
         ) {
-            BasicTextField(
-                value = taskText,
-                onValueChange = {
-                    taskText = it
-                },
-                label = { Text(stringResource(id = R.string.enter_task_hint)) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        if (taskText.isNotBlank()) {
-                            val newTask = Task(taskText = taskText)
-                            coroutineScope.launch(Dispatchers.IO) {
-                                taskDao.insert(newTask)
-                                taskText = ""
-                                // Refresh the task list to display the new task
-                                tasks = taskDao.getAllTasks()
-                            }
-                        }
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(72.dp)
-            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -160,15 +132,14 @@ fun TaskItemRow(task: Task, onDeleteTask: (Task) -> Unit) {
                 .align(Alignment.CenterVertically)  // Align text to center vertically
                 .padding(16.dp)
         )
-        IconButton(
+        Button(
             onClick = { onDeleteTask(task) },
             modifier = Modifier
                 .padding(16.dp)
         ) {
-            Icon(
-                Icons.Outlined.Delete,
-                contentDescription = stringResource(id = R.string.delete_button),
-                modifier = Modifier.size(36.dp)
+            Text(
+                stringResource(id = R.string.button_remove_task),
+                style = MaterialTheme.typography.body1
             )
         }
     }
@@ -176,7 +147,7 @@ fun TaskItemRow(task: Task, onDeleteTask: (Task) -> Unit) {
 
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
-fun PreviewTodoApp() {
+fun DefaultPreview() {
     val tasks = emptyList<Task>() // Initialize with an empty list
 
     WearostodoappTheme {
